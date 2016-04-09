@@ -1,0 +1,145 @@
+---
+title: "RRProject2.rmd"
+output: html_document
+## This document presents analysis and outcome of analysis of National Weather Service Storm Data
+---
+#Synopsis
+In this documentation, I have processed the data to combine 48 major storma data events, which is scattererd and unorganized in the original document.
+After getting processed data, an attempt is made to answer following questions-
+1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to
+population health?
+2. Across the United States, which types of events have the greatest economic consequences?
+ Answers are obtained by analysing data and graphs are plotted to derive inference from the data.
+ 
+##Data Processing:
+
+Firstly, data was loaded and then subsetted using following code:
+subset contains only those columns which are required to answer the questions asked.
+```{r cache = TRUE,echo = TRUE}
+storm<-read.csv("repdata_data_StormData.csv")
+data<-storm[,c("EVTYPE","FATALITIES","INJURIES")]
+```
+
+Then raw data processed to get clean data. For doing so, the factors in EVTYPE column were analyzed and each one of 48 required variables was obtained after loading and renaming inappropriately named data with correct names so as to fecilitate completebanalysis. Here's the code used to process the data. Still there was some data left uncategorized but their effect can be neglected as their frequency of occurence was very low.
+```{r echo = TRUE,cache = TRUE}
+data$EVTYPE<-gsub("TSTM","Thunderstorm",data$EVTYPE,fixed = FALSE,ignore.case = TRUE)
+tndbool<-grepl("Tornado",data$EVTYPE,fixed = FALSE,ignore.case = TRUE)
+marinehailbool<-grepl("marine hail",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+wfbool<-grepl("Wild Fire",data$EVTYPE,fixed = FALSE,ignore.case = TRUE)
+marinehighwindbool<-grepl("marine high",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+marinetstmbool<-grepl("marine thunderstorm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[marinetstmbool]<-"MarineThunderstorm"
+tsmbool<-grepl("Thunderstorm",data$EVTYPE,fixed = FALSE,ignore.case = TRUE)&!marinetstmbool
+hwbool<-grepl("High Wind",data$EVTYPE,fixed = FALSE,ignore.case = TRUE)&!marinehighwindbool
+flashbool<-grepl("flash",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+lsfld2bool<-grepl("Lake flood",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+lsfld1bool<-grepl("Lakeshore",data$EVTYPE,ignore.case = TRUE, fixed = FALSE) 
+lsfldbool<-lsfld2bool|lsfld1bool
+cstlfldbool<-grepl("coastal flood",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+tdlfldbool<-grepl("tidal flood",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+coastalfldbool<-tdlfldbool|cstlfldbool
+floodbool<-grepl("flood",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+floodbool<-floodbool&!flashbool&!coastalfldbool&!lsfldbool
+hailbool<-grepl("hail",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)&!marinehailbool
+frostbool<-grepl("frost",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+freezebool<-grepl("freeze",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+fzftzebool<-freezebool|frostbool
+trndobool<-grepl("tornado",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+exheatbool<-grepl("excessive heat",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|
+  grepl("extreme heat",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+heatbool<-grepl("heat",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+heatbool<-heatbool&!exheatbool
+srgbool<-grepl("surge",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+
+data$EVTYPE[marinehailbool]<-"MarineHail"
+data$EVTYPE[trndobool]<-"Tornado"
+data$EVTYPE[wfbool]<-"Wild Fire"
+data$EVTYPE[tsmbool]<-"Thunderstorm"
+data$EVTYPE[hwbool]<-"HighWind"
+data$EVTYPE[flashbool]<-"FlashFlood"
+data$EVTYPE[lsfldbool]<-"LakeshoreFlood"
+data$EVTYPE[floodbool]<-"Flood"
+data$EVTYPE[coastalfldbool]<-"CoastalFlood"
+data$EVTYPE[hailbool]<-"Hail"
+data$EVTYPE[fzftzebool]<-"Frost/Freeze"
+data$EVTYPE[exheatbool]<-"ExcessiveHeat"
+data$EVTYPE[srgbool]<-"StormSurge/Tide"
+data$EVTYPE[heatbool]<-"Heat"
+trpstormbool<-grepl("tropical storm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[trpstormbool]<-"Tropicalstorm"
+ashbool<-grepl("volcanic ash",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[ashbool]<-"VolcanicAsh"
+data$EVTYPE[trpstormbool]<-"TropicalStorm"
+waterbool1<-grepl("waterspout",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+waterbool2<-grepl("water spout",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+waterbool<-waterbool1|waterbool2
+data$EVTYPE[waterbool]<-"Waterspout"
+winterstormbool<-grepl("winter storm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[winterstormbool]<-"WinterStorm"
+winterwthrbool<-grepl("winter weather",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[winterwthrbool]<-"WinterWeather"
+justwind<-data$EVTYPE%in%"WIND"
+data$EVTYPE[justwind]<-"StrongWinds"
+currentbool<-grepl("current",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[currentbool]<-"RipCurrent"
+ltbool<-grepl("lightning",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[ltbool]<-"Lightning"
+lake_effbool<-grepl("Lake Effect",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("Lake-Effect",data$EVTYPE,ignore.case = TRUE,fixed = "False")
+data$EVTYPE[lake_effbool]<-"LakeEffectSnow"
+icebool<-grepl("ice storm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[icebool]<-"IceStorm"
+mrstrongbool<-grepl("marine strong",data$EVTYPE,ignore.case = TRUE,fixed = FALSE)
+strongwindbool<-grepl("strong wind",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("gusty wind",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("wind gusts",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)&!mrstrongbool
+data$EVTYPE[strongwindbool]<-"StrongWinds"
+avalanchebool<-grepl("avalan",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[avalanchebool]<-"Avalanche"
+blizbool<-grepl("bliz",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[blizbool]<-"Blizzard"
+excoldchillbool<-grepl("extreme",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[excoldchillbool]<-"ExtremeCold/WindChill"
+data$EVTYPE[excoldchillbool]<-"ExtremeCold/WindChill"
+coldbool<-grepl("chill",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)&!excoldchillbool
+data$EVTYPE[coldbool]<-"Cold/WindChill"
+dfogbool<-grepl("dense fog",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[dfogbool]<-"DenseFog"
+fogbool<-data$EVTYPE%in%"FOG"
+data$EVTYPE[fogbool]<-"Densefog"
+devilbool<-grepl("devil",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[devilbool]<-"DustDevil"
+dstormbool<-grepl("duststorm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("dust storm",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[dstormbool]<-"DustStorm"
+funnelbool<-grepl("funnel cloud",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[funnelbool]<-"FunnelCloud"
+frfogbool<-grepl("freezing fog",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[frfogbool]<-"FreezingFog"
+sltbool<-grepl("sleet",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[sltbool]<-"Sleet"
+rainbool<-grepl("heavy rain",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("excessive rain",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[rainbool]<-"HeavyRain"
+surfbool<-grepl("surf",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[surfbool]<-"HighSurf"
+hrtfbool<-grepl("hurricane",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)|grepl("typhoon",data$EVTYPE,ignore.case = TRUE,fixed = "FALSE")
+data$EVTYPE[hrtfbool]<-"Hurricane(Typhoon)"
+snowbool<-grepl("heavy snow",data$EVTYPE,ignore.case = TRUE, fixed = FALSE)
+data$EVTYPE[snowbool]<-"HeavySnow" 
+```
+
+A weightage factor was determined by taking ratio of total injuries and total fatalities. Total weighted damage to health caused by diiferent storm events was calculated using following code:
+```{r echo =  TRUE}
+fatalitydata<-tapply(data$FATALITIES,data$EVTYPE,sum)
+injurydata<-tapply(data$INJURIES,data$EVTYPE,sum)
+sfactor<-sum(fatalitydata)/sum(injurydata)
+weightedharm<-injurydata*sfactor+(1-sfactor)*fatalitydata
+
+```
+
+Then a graph was plotted to infer the most and least harmful events with respect to health.Since graph is needed to get event causing maximum fatality and not its exact value, log value of weighted fatality is taket to bring clarity in the graph :
+
+```{r echo = TRUE,fig.height = 10,fig.width = 10}
+reqdata<-weightedharm[weightedharm>0]
+library(ggplot2)
+qplot(log(reqdata[reqdata>1]),names(reqdata[reqdata>1]),colour = names(reqdata[reqdata>1]),xlab = "log(Weighted fatalities)",ylab = "StormEvent" )
+
+```
+#Results:
+1. Tornado is found to be most harmful for public health, causing most harm in terms of fatality and injury.

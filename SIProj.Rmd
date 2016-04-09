@@ -1,0 +1,64 @@
+---
+title: "Statistical Inference project 1"
+author: "Kumar Suraj"
+date: "Sunday, July 26, 2015"
+output: html_document
+---
+##Overview:
+In this paper, an attempt is made to simulate exponential distribution sample and then compare the theoretical mean and median distribution for obtained samples. Further investigation is done to check if the mean distribution follows normal distribution. 
+
+##Simulation :
+Following code is used to simulate the required data.40 random numbers are chosen from a population of exponential distribution with mean(= 1/lambda) 5.Then mean and variance for each simulation is evaluated in stored in vectors avg and var respectively. 
+```{r}
+  library(ggplot2)
+  lambda <- 0.2
+  avg <- NULL
+  var<-NULL
+  for (i in 1:1000){
+    sample<-rexp(40,0.2)
+    vr<-var(sample)
+    mn<-mean(sample)
+    avg<-c(avg,mn)
+    var<-c(var,vr)
+  }
+
+```
+
+##Sample Mean versus Theoretical Mean : 
+A histogramis created to show distribution of mean of samples obtained in above simulation.The vertical line indicates the population mean (here theoretical mean = 5). 
+We see that simulatio means converge towards the theoretical mean.
+
+```{r}
+  th_mean<-1/lambda
+  th_var<-1/lambda^2
+ 
+  hist(avg,breaks = 50,col = "grey", prob = TRUE,xlab = "mean for random  samples",main = " ")
+  title(main = "Histogram for Mean")
+  abline(v = 1/lambda,col = "magenta")
+  legend("topright",col = c("magenta"),lty =1, legend = "theoretical mean")
+```
+
+##Sample Variance versus Theoretical Variance :
+Theoretical variance is calculated in the following code and then simulation variance is obtained. It is found that the two values are in close proximity to each other. A histogram is created to show the distribution of variance of each simulation. The vertical line represents theoretical variance( = 1/lambda^2).
+```{r}
+  print(paste("theoretical variance = ",(1/lambda)^2/40))
+  print(paste("simulation variance = ", round(var(avg),3)))
+  hist(var,border = "black",col = "grey",main = " ")
+  abline(v = (1/lambda)^2,col="red" )
+  legend("topright",legend = "Theoretical variance", lty = 1, col = "red")
+  title(main = "Histogram of variance")
+```
+
+
+##Distribution : 
+A density plot is made for distribution of mean of samples obtained in simulation.A plot normal distribution denstity is create in the same plot. Comparing density plot and normal distribution, we observe that mean distribution is roughly normal in agreement with LLN.
+```{r}
+  x <- seq(min(avg),max(avg),length = 100)
+  y <- dnorm(seq(0,10,length = 100),mean=5, sd = 5/sqrt(40))
+   hist(avg,breaks = 50,col = "grey", prob = TRUE,xlab = "mean for random  samples",main = " ")
+  title(main = "Histogram for Mean")
+  abline(v = 1/lambda,col = "magenta")
+  lines(x,y,col = "blue",lty = 2,lwd =2)
+  lines(density(avg),col = "green",lwd =2, lty = 2)
+  legend("topright",col = c("green","blue"),lty =2, legend = c("simulation mean distribution","normal distribution"))
+```

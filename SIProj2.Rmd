@@ -1,0 +1,41 @@
+---
+title: "Statical Inference Project Part 2"
+author: "Kumar Suraj"
+date: "Sunday, July 26, 2015"
+output: html_document
+---
+
+##Loading data
+Loading data in R.
+```{r}
+library(datasets)
+data(ToothGrowth)
+head(ToothGrowth)
+```
+
+
+##Exploratory data analysiss 
+A barplot is created for each dose seperately for each of the two supplements(OJ and VC) using ggplot2 package. Barplot shows that increased dose of both supplements results in longer tooth length. Hence a posituive cor```relation exists.
+
+```{r}
+library(ggplot2)
+tg<-ToothGrowth
+ggplot(data = tg, aes(x = as.factor(dose),y = len,fill = supp))+
+  geom_bar(stat = "identity")+facet_grid(.~supp)+
+  xlab("Dose")+
+  ylab("Tooth Length")+
+  guides(fill = guide_legend(title = "Supplement type"))
+```
+
+##Finding Correlation:
+following code checks how much of the variance in tooth length (if any) can be explained by the supplement type
+```{r}
+fit <- lm(len ~ dose + supp, data=tg)
+summary(fit)
+```
+
+It shows 70% of the variance in the data. The intercept is 9.2725, meaning that with no supplement of Vitamin C, the average tooth length is 9.2725 units. The coefficient of dose is 9.7636, meaning that increasing the delievered dose of 1 mg, all else equal (i.e. no change in the supplement type), would increase the tooth length 9.7636 units
+```{r}
+confint(fit)
+```
+For each coefficient (i.e. intercept, dose and suppVC), the null hypothesis is that the coefficients are zero, meaning that no tooth length variation is explained by that variable. All p-values are less than 0.05, rejecting the null hypothesis and suggesting that each variable explains a significant portion of variability in tooth length, assuming the significance level is 5%.
